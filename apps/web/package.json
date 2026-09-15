@@ -1,0 +1,31 @@
+{
+  "name": "@vinolog/web",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "lint": "eslint .",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@fontsource/source-sans-3": "^5.2.8",
+    "@fontsource/source-serif-4": "^5.2.8",
+    "@lucide/vue": "^1.46.0",
+    "@vinolog/contracts": "*",
+    "nuxt": "^4.5.2",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.9.0",
+    "eslint": "^9.35.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.0.7"
+  }
+}

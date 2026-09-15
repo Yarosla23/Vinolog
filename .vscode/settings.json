@@ -1,0 +1,26 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.tsserver.exclude": [
+    "**/.nuxt/**",
+    "**/.output/**"
+  ],
+  "files.exclude": {
+    "**/.nuxt": true,
+    "**/.output": true
+  },
+  "files.watcherExclude": {
+    "**/.nuxt/**": true,
+    "**/.output/**": true
+  },
+  "search.exclude": {
+    "**/.nuxt": true,
+    "**/.output": true
+  },
+  "eslint.workingDirectories": [
+    {
+      "directory": "apps/web",
+      "changeProcessCWD": true
+    }
+  ]
+}

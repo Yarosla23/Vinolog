@@ -1,0 +1,20 @@
+{
+  "name": "vinolog",
+  "private": true,
+  "engines": {
+    "node": ">=22.22.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @vinolog/web",
+    "build": "npm run build --workspace @vinolog/web",
+    "lint": "npm run lint --workspace @vinolog/web",
+    "prepare:nuxt": "npm run postinstall --workspace @vinolog/web",
+    "typecheck": "npm run typecheck --workspace @vinolog/web",
+    "test": "npm run test --workspace @vinolog/web",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  }
+}
