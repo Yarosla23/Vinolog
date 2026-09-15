@@ -1,0 +1,83 @@
+services:
+  dataset-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.dataset
+    volumes:
+      - ./data/dataset:/input:ro
+      - dataset:/dataset
+    restart: "no"
+
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: vinolog
+      POSTGRES_DB: vinolog
+      POSTGRES_PASSWORD: ${VINLOG_DB_PASSWORD:-vinolog}
+    ports:
+      - "${VINLOG_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  db-import:
+    image: postgres:16-bookworm
+    depends_on:
+      dataset-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: vinolog
+      PGDATABASE: vinolog
+      PGPASSWORD: ${VINLOG_DB_PASSWORD:-vinolog}
+    volumes:
+      - ./db:/import:ro
+      - ./data/dataset:/input:ro
+      - dataset:/dataset:ro
+    entrypoint: ["sh", "/import/import-dataset.sh"]
+    restart: "no"
+
+  web:
+    build: .
+    depends_on:
+      dataset-init:
+        condition: service_completed_successfully
+      db-import:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    environment:
+      VINLOG_UID: ${VINLOG_UID:-1000}
+      VINLOG_GID: ${VINLOG_GID:-1000}
+      NUXT_PUBLIC_SCAN_MODE: mock
+      NUXT_RETRIEVAL_BASE_URL: http://127.0.0.1:8000
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: vinolog
+      PGDATABASE: vinolog
+      PGPASSWORD: ${VINLOG_DB_PASSWORD:-vinolog}
+    volumes:
+      - .:/workspace/Vinolog
+      - ${HOME}/.ssh:/workspace/Vinolog/.docker-home/.ssh:ro
+      - ${GITHUB_GEM_TOKEN_PATH:-./github_gem_token.txt}:/run/secrets/github_ssh_key:ro
+      - node-modules:/workspace/Vinolog/node_modules
+      - nuxt-cache:/workspace/Vinolog/apps/web/.nuxt
+      - codex-home:/home/node/.codex
+      - dataset:/workspace/Vinolog/data/installed:ro
+    init: true
+    tty: true
+    stdin_open: true
+
+volumes:
+  postgres-data:
+  node-modules:
+  nuxt-cache:
+  codex-home:
+  dataset:

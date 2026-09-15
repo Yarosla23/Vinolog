@@ -1,8 +1,10 @@
 node_modules/
+.docker-home/
 .nuxt/
 .output/
 .data/
 .env
+github_gem_token.txt
 *.log
 .DS_Store
 coverage/
@@ -11,4 +13,3 @@ coverage/
 data/
 models/
 indexes/
-
