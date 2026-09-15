@@ -14,6 +14,39 @@ npm run dev
 
 После запуска откройте `http://localhost:3000`. Текущий серверный маршрут работает в демонстрационном mock-режиме и не выполняет настоящее распознавание.
 
+## Docker
+
+Требования: Docker Engine или Docker Desktop с Compose; локальный Node.js для этого способа запуска не нужен.
+
+Поместите `prod-svoe-vino-strapi.part1.rar`, `prod-svoe-vino-strapi.part2.rar`, `prod-svoe-vino-strapi.part3.rar`, `strapi_output0709.csv` и `eval.zip` в `data/dataset/`. Для сборки и входа:
+
+```bash
+docker compose up --build -d
+docker compose exec web sh
+```
+
+Внутри контейнера рабочая директория — `/workspace/Vinolog`; shell запускается от UID/GID из локального `.env` (по умолчанию `1000:1000`). На Linux с другим UID/GID укажите свои `VINLOG_UID` и `VINLOG_GID` в `.env`. Правки исходников и Git-коммиты сразу видны на хосте; dev-сервер обновляется без пересборки. `node_modules` и `.nuxt` хранятся в отдельных томах; `.output` создаётся только при production build и игнорируется Git. При первом запуске или изменении `package-lock.json` контейнер выполняет `npm ci` для смонтированной директории. Выход из shell — `exit`.
+
+Git и OpenSSH уже установлены в образе. Для push каждый разработчик заменяет содержимое локального `github_gem_token.txt` своим полным приватным ключом OpenSSH (начиная со строки `-----BEGIN OPENSSH PRIVATE KEY-----`) и выставляет права `chmod 600 github_gem_token.txt`. Путь задаётся в игнорируемом Git файле `.env` как `GITHUB_GEM_TOKEN_PATH=./github_gem_token.txt`. Ключ монтируется только для чтения, исключён из сборки образа и используется Git внутри shell. Публичный ключ должен быть зарегистрирован в GitHub. Если файл ещё не заполнен, Git использует существующие ключи из `~/.ssh`. Имя и почту для коммитов можно задать внутри командами `git config user.name "Имя"` и `git config user.email "email@example.com"`; настройки сохранятся в `.git/config`. Приложение доступно на `http://localhost:3000`. Образ содержит Node.js 22.22.2, Git, Python 3 и ripgrep; при сборке выполняется `npm run check`.
+
+```bash
+docker compose exec web sh -c 'npm run check'
+docker compose down
+```
+
+Первый запуск распаковывает медиа Strapi, CSV-каталог и проверочный набор в постоянный том `vinolog_dataset`. Следующие запуски используют этот том без повторной распаковки, в том числе после `docker compose down` и пересборки образа. В контейнере данные доступны только для чтения по пути `/workspace/Vinolog/data/installed/current/{uploads,catalog,eval}`. Локальный каталог `data/dataset/` подключается к контейнеру инициализации только для чтения и исключен из build context. Само приложение пока работает в mock-режиме и не выполняет поиск по этим данным.
+
+При первом `docker compose up` создаётся PostgreSQL и загружается весь CSV в `wine_catalog_raw` без удаления дублей. Представление `wine_catalog` даёт одну запись на `slug`; `wine_media` содержит пути и размеры файлов из всех частей RAR, а сами изображения остаются в `vinolog_dataset`. Таблица `dataset_imports` фиксирует импорт и хеш CSV. БД сохраняется в томе `vinolog_postgres-data` и не загружается повторно при следующих запусках. Внутри web-контейнера `psql` уже настроен через `PGHOST`/`PGUSER`/`PGDATABASE`:
+
+```bash
+psql -c 'SELECT catalog_rows, media_rows FROM dataset_imports;'
+psql -c 'SELECT slug, name, winery FROM wine_catalog LIMIT 5;'
+```
+
+С хоста PostgreSQL доступен на `localhost:5433` (порт меняется через `VINLOG_DB_PORT` в `.env`). Локальный пользователь и БД — `vinolog`, пароль — `VINLOG_DB_PASSWORD` из `.env` или `vinolog` по умолчанию. Изображение с путём `relative_path` из `wine_media` находится под `data/installed/current/uploads/` внутри web. Имена фото в CSV не совпадают напрямую с именами файлов Strapi, поэтому связь вин с изображениями пока не построена. Docker собирает образы командой `build`, а БД создаёт и импортирует данные при первом `up`; SQL-дампа в наборе нет. Маршрут сканирования пока возвращает mock-ответ и ещё не обращается к каталогу.
+
+После изменения исходников пересборка не требуется; изменение Dockerfile или Compose примените командой `docker compose up --build -d`. Локальный `.env` необязателен и игнорируется Git. Для намеренного повторного импорта обновлённого набора удалите только его тома после `docker compose down`: `docker volume rm vinolog_dataset vinolog_postgres-data`. Эта команда удаляет локальные распакованные данные и БД, но не исходные архивы. `.env`, `models/` и `indexes/` также исключены из образа.
+
 ## Команды
 
 ```bash
