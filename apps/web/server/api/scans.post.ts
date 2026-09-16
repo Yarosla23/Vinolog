@@ -1,13 +1,15 @@
 import type { ScanResponse, WineCard } from '@vinolog/contracts'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const acceptedTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const acceptedTypes = new Set(['application/octet-stream', 'image/jpeg', 'image/png', 'image/webp'])
 
 const demoWine: WineCard = {
   slug: 'usadba-divnomorskoe-rebus-2019',
   name: 'Ребус, выдержанное красное',
   producer: 'Усадьба Дивноморское',
   year: 2019,
+  category: 'Вино',
+  color: 'Красное',
   region: 'Краснодарский край',
   grapeVarieties: ['Каберне Совиньон', 'Мерло'],
   description: 'Сухое красное вино с насыщенным вкусом и пряными оттенками.',
@@ -20,6 +22,8 @@ const demoAlternative: WineCard = {
   name: 'Семейный резерв',
   producer: 'Имение Сикоры',
   year: 2020,
+  category: 'Вино',
+  color: 'Красное',
   region: 'Семигорье',
   grapeVarieties: ['Каберне Совиньон'],
   description: null,
@@ -50,6 +54,31 @@ export default defineEventHandler(async (event): Promise<ScanResponse> => {
       statusCode: 413,
       message: 'Размер фотографии не должен превышать 10 МБ.',
     })
+  }
+
+  const config = useRuntimeConfig()
+  if (config.public.scanMode !== 'mock') {
+    const body = new FormData()
+    body.append(
+      'image',
+      new Blob([new Uint8Array(image.data)], { type: image.type }),
+      image.filename || 'wine-label',
+    )
+
+    try {
+      return await $fetch<ScanResponse>(`${config.retrievalBaseUrl}/v1/search`, {
+        method: 'POST',
+        body,
+        timeout: 10_000,
+      })
+    }
+    catch (error) {
+      throw createError({
+        statusCode: 502,
+        message: 'Сервис распознавания временно недоступен. Попробуйте ещё раз.',
+        cause: error,
+      })
+    }
   }
 
   // Mock branches make every product state reproducible before the CV service exists.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ScanResponse } from '@vinolog/contracts'
-import { ArrowRight, CircleAlert, Grape, MapPin, RotateCcw, ThermometerSun, Utensils } from '@lucide/vue'
+import { ArrowRight, CircleAlert, Grape, MapPin, Palette, RotateCcw, Tags, ThermometerSun, Utensils } from '@lucide/vue'
 
 const props = defineProps<{
   result: ScanResponse
@@ -24,11 +24,19 @@ const pairingQuery = computed(() => ({
     </div>
 
     <article v-if="result.status === 'matched' && result.wine" class="wine-card">
-      <div class="wine-card__visual" aria-hidden="true">
-        <span class="wine-card__bottle">
+      <figure class="wine-card__visual">
+        <img
+          v-if="result.wine.imageUrl"
+          class="wine-card__image"
+          :src="result.wine.imageUrl"
+          :alt="`Эталонная бутылка ${result.wine.name}`"
+          decoding="async"
+        >
+        <span v-else class="wine-card__bottle" aria-hidden="true">
           <span>СВ</span>
         </span>
-      </div>
+        <figcaption v-if="result.wine.imageUrl">Фото из каталога</figcaption>
+      </figure>
 
       <div class="wine-card__content">
         <p class="eyebrow">Совпадение найдено</p>
@@ -40,6 +48,14 @@ const pairingQuery = computed(() => ({
         </p>
 
         <dl class="wine-facts">
+          <div v-if="result.wine.category">
+            <dt><Tags :size="17" aria-hidden="true" /> Категория</dt>
+            <dd>{{ result.wine.category }}</dd>
+          </div>
+          <div v-if="result.wine.color">
+            <dt><Palette :size="17" aria-hidden="true" /> Цвет</dt>
+            <dd>{{ result.wine.color }}</dd>
+          </div>
           <div v-if="result.wine.region">
             <dt><MapPin :size="17" aria-hidden="true" /> Регион</dt>
             <dd>{{ result.wine.region }}</dd>

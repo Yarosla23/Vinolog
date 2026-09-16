@@ -44,6 +44,49 @@ services:
     entrypoint: ["sh", "/import/import-dataset.sh"]
     restart: "no"
 
+  retrieval-index:
+    build:
+      context: ./services/retrieval
+    depends_on:
+      dataset-init:
+        condition: service_completed_successfully
+      db-import:
+        condition: service_completed_successfully
+    command: ["python", "-m", "app.build_index"]
+    environment: &retrieval-environment
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: vinolog
+      PGDATABASE: vinolog
+      PGPASSWORD: ${VINLOG_DB_PASSWORD:-vinolog}
+      DATASET_ROOT: /dataset/current
+      INDEX_PATH: /indexes/sift-v2.npz
+    volumes:
+      - dataset:/dataset:ro
+      - retrieval-index:/indexes
+    restart: "no"
+
+  retrieval:
+    build:
+      context: ./services/retrieval
+    depends_on:
+      db:
+        condition: service_healthy
+      retrieval-index:
+        condition: service_completed_successfully
+    environment: *retrieval-environment
+    ports:
+      - "8080:8000"
+    volumes:
+      - dataset:/dataset:ro
+      - retrieval-index:/indexes:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
   web:
     build: .
     depends_on:
@@ -51,13 +94,15 @@ services:
         condition: service_completed_successfully
       db-import:
         condition: service_completed_successfully
+      retrieval:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       VINLOG_UID: ${VINLOG_UID:-1000}
       VINLOG_GID: ${VINLOG_GID:-1000}
-      NUXT_PUBLIC_SCAN_MODE: mock
-      NUXT_RETRIEVAL_BASE_URL: http://127.0.0.1:8000
+      NUXT_PUBLIC_SCAN_MODE: retrieval
+      NUXT_RETRIEVAL_BASE_URL: http://retrieval:8000
       PGHOST: db
       PGPORT: "5432"
       PGUSER: vinolog
@@ -81,3 +126,4 @@ volumes:
   nuxt-cache:
   codex-home:
   dataset:
+  retrieval-index:

@@ -7,6 +7,8 @@ export interface WineCard {
   name: string
   producer: string
   year: number | null
+  category: string | null
+  color: string | null
   region: string | null
   grapeVarieties: readonly string[]
   description: string | null
