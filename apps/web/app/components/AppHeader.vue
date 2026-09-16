@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bookmark, ScanLine } from '@lucide/vue'
+import { Bookmark, Database, ScanLine } from '@lucide/vue'
 </script>
 
 <template>
@@ -25,6 +25,10 @@ import { Bookmark, ScanLine } from '@lucide/vue'
         <NuxtLink class="site-nav__link" to="/pairings">
           <Bookmark :size="19" aria-hidden="true" />
           <span>Мои сочетания</span>
+        </NuxtLink>
+        <NuxtLink class="site-nav__link" to="/admin">
+          <Database :size="19" aria-hidden="true" />
+          <span>Каталог</span>
         </NuxtLink>
       </nav>
     </div>

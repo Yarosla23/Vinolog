@@ -2,10 +2,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from time import perf_counter
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from .config import load_settings
+from .catalog_browser import CatalogBrowser
 from .image_features import decode_image
 from .index import SiftIndex
 from .service import SearchService
@@ -20,16 +21,20 @@ IMAGE_MEDIA_TYPES = {
 }
 settings = load_settings()
 service: SearchService | None = None
+catalog_browser: CatalogBrowser | None = None
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global service
+    global catalog_browser, service
     if not Path(settings.index_path).is_file():
         raise RuntimeError(f"Retrieval index is missing: {settings.index_path}")
-    service = SearchService(SiftIndex.load(settings.index_path))
+    index = SiftIndex.load(settings.index_path)
+    service = SearchService(index)
+    catalog_browser = CatalogBrowser(settings.database_url, index)
     yield
     service = None
+    catalog_browser = None
 
 
 app = FastAPI(title="Vinolog retrieval", version="0.1.0", lifespan=lifespan)
@@ -59,6 +64,23 @@ def wine_image(slug: str) -> FileResponse:
         image_path,
         media_type=media_type,
         headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/v1/catalog")
+def catalog(
+    q: str = Query(default="", max_length=120),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=24, ge=1, le=60),
+    image_status: str = Query(default="all", pattern="^(all|indexed|missing)$"),
+) -> dict[str, object]:
+    if catalog_browser is None:
+        raise HTTPException(status_code=503, detail="Каталог ещё загружается.")
+    return catalog_browser.browse(
+        query=q,
+        page=page,
+        per_page=per_page,
+        image_status=image_status,
     )
 
 

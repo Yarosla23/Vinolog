@@ -1,6 +1,8 @@
 import unittest
 
 from app.catalog import Media, Wine, media_stem, normalize_key, resolve_references
+from app.catalog_browser import catalog_record
+from app.index import IndexedReference
 from app.ocr import text_score
 
 
@@ -53,6 +55,22 @@ class CatalogTest(unittest.TestCase):
         label = "ТАБИЯ Пино Нуар полусухое 2025"
 
         self.assertGreater(text_score(label, pinot), text_score(label, kokur))
+
+    def test_catalog_record_exposes_image_mapping_diagnostics(self) -> None:
+        item = wine()
+        reference = IndexedReference(
+            wine=item,
+            relative_path="pino.webp",
+            mapping_kind="image_filename",
+            mapping_score=1.0,
+        )
+
+        record = catalog_record(item, reference, raw_record_count=2)
+
+        self.assertEqual(record["imageUrl"], "/api/wines/pino-nuar-2025/image")
+        self.assertEqual(record["referencePath"], "pino.webp")
+        self.assertEqual(record["rawRecordCount"], 2)
+        self.assertTrue(record["isIndexed"])
 
 
 if __name__ == "__main__":

@@ -59,3 +59,36 @@ export interface SavedPairing {
   verdict: string
   savedAt: string
 }
+
+export type CatalogImageStatus = 'all' | 'indexed' | 'missing'
+
+export interface CatalogSummary {
+  rawRecords: number
+  uniqueWines: number
+  duplicateSlugs: number
+  mediaFiles: number
+  indexedWines: number
+  missingFromIndex: number
+}
+
+export interface CatalogAdminWine extends WineCard {
+  imageFilename: string
+  referencePath: string | null
+  mappingKind: string | null
+  mappingScore: number | null
+  rawRecordCount: number
+  isIndexed: boolean
+}
+
+export interface CatalogPagination {
+  page: number
+  perPage: number
+  totalItems: number
+  totalPages: number
+}
+
+export interface CatalogAdminResponse {
+  summary: CatalogSummary
+  wines: readonly CatalogAdminWine[]
+  pagination: CatalogPagination
+}
