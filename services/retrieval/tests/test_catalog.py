@@ -3,7 +3,9 @@ import unittest
 from app.catalog import Media, Wine, media_stem, normalize_key, resolve_references
 from app.catalog_browser import catalog_record
 from app.index import IndexedReference
-from app.ocr import text_score
+from app.index import Candidate
+from app.ocr import extract_year, text_score
+from app.service import filter_by_year
 
 
 def wine(**overrides: str) -> Wine:
@@ -71,6 +73,53 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(record["referencePath"], "pino.webp")
         self.assertEqual(record["rawRecordCount"], 2)
         self.assertTrue(record["isIndexed"])
+
+
+
+def candidate(slug: str, name: str, score: float = 0.5) -> Candidate:
+    return Candidate(
+        wine=wine(slug=slug, name=name),
+        relative_path=f"{slug}.webp",
+        score=score,
+        good_matches=12,
+        inliers=8,
+    )
+
+
+class OcrYearTest(unittest.TestCase):
+    def test_extracts_single_year(self) -> None:
+        self.assertEqual(extract_year("Урожай 2019 года"), 2019)
+
+    def test_repeated_same_year_is_not_ambiguous(self) -> None:
+        self.assertEqual(extract_year("2019 Ребус 2019"), 2019)
+
+    def test_conflicting_years_are_ambiguous(self) -> None:
+        self.assertIsNone(extract_year("2019 или 2020 неизвестно"))
+
+    def test_absent_year_returns_none(self) -> None:
+        self.assertIsNone(extract_year("красное вино"))
+
+    def test_year_outside_vintage_range_is_ignored(self) -> None:
+        self.assertIsNone(extract_year("основано в 1861"))
+
+
+class YearFilterTest(unittest.TestCase):
+    def test_year_filter_drops_other_vintages(self) -> None:
+        candidates = [candidate("rebus-2020", "Ребус 2020"), candidate("rebus-2019", "Ребус 2019")]
+
+        filtered = filter_by_year(candidates, 2019)
+
+        self.assertEqual([item.wine.slug for item in filtered], ["rebus-2019"])
+
+    def test_filter_is_skipped_without_year(self) -> None:
+        candidates = [candidate("rebus-2020", "Ребус 2020"), candidate("rebus-2021", "Ребус 2021")]
+
+        self.assertEqual(filter_by_year(candidates, None), candidates)
+
+    def test_filter_fails_open_when_nothing_matches(self) -> None:
+        candidates = [candidate("rebus-2020", "Ребус 2020"), candidate("rebus-2021", "Ребус 2021")]
+
+        self.assertEqual(filter_by_year(candidates, 2019), candidates)
 
 
 if __name__ == "__main__":

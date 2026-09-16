@@ -6,13 +6,30 @@ from urllib.parse import quote
 
 import numpy as np
 
-from .index import SearchResult, SiftIndex
-from .ocr import extract_label_text, text_score
+from .index import Candidate, SearchResult, SiftIndex
+from .ocr import extract_label_text, extract_year, text_score
+
+
+SHORTLIST_LIMIT = 50
+RESPONSE_LIMIT = 5
 
 
 @dataclass(frozen=True)
 class ProductResult:
     body: dict[str, object]
+
+
+def _wine_card_with_image(candidate: Candidate) -> dict[str, object]:
+    card = candidate.wine.as_card()
+    card["imageUrl"] = f"/api/wines/{quote(candidate.wine.slug, safe='')}/image"
+    return card
+
+
+def filter_by_year(candidates: list[Candidate], year: int | None) -> list[Candidate]:
+    if year is None:
+        return list(candidates)
+    matching = [item for item in candidates if str(year) in f"{item.wine.name} {item.wine.slug}"]
+    return matching or list(candidates)
 
 
 class SearchService:
@@ -21,7 +38,7 @@ class SearchService:
 
     def search(self, image: np.ndarray) -> ProductResult:
         started = time.perf_counter()
-        result = self.index.search(image)
+        result = self.index.search(image, limit=SHORTLIST_LIMIT)
         ocr_started = time.perf_counter()
         label_text = extract_label_text(image)
         ocr_ms = round((time.perf_counter() - ocr_started) * 1000)
@@ -30,10 +47,10 @@ class SearchService:
                 candidate,
                 score=round(min(1.0, candidate.score + (0.2 * text_score(label_text, candidate.wine))), 4),
             )
-            for candidate in result.candidates
+            for candidate in filter_by_year(result.candidates, extract_year(label_text))
         ]
         candidates.sort(key=lambda item: (item.score, item.inliers, item.good_matches), reverse=True)
-        result = replace(result, candidates=candidates)
+        result = replace(result, candidates=candidates[:RESPONSE_LIMIT])
         total_ms = round((time.perf_counter() - started) * 1000)
         return ProductResult(self._product_body(result, total_ms, ocr_ms))
 
@@ -47,6 +64,7 @@ class SearchService:
         wine_card = top.wine.as_card() if top else None
         if wine_card:
             wine_card["imageUrl"] = f"/api/wines/{quote(top.wine.slug, safe='')}/image"
+        alternatives = [_wine_card_with_image(item) for item in candidates[1:4]]
 
         if top and top.inliers >= 7 and top.good_matches >= 10 and top_score >= 0.3:
             status = "matched"
@@ -78,7 +96,7 @@ class SearchService:
                     "ocr": ocr_ms,
                 },
             },
-            "alternatives": [],
+            "alternatives": alternatives,
             "version": {
                 "model": "sift-ransac-ocr-v1",
                 "catalog": "dataset-v1",

@@ -11,6 +11,7 @@ from .catalog import CYRILLIC_TO_LATIN, Wine, _token_similarity
 
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+", re.IGNORECASE)
+VINTAGE_PATTERN = re.compile(r"(?<!\d)(19[5-9]\d|20[0-2]\d)(?!\d)")
 STOP_WORDS = {
     "beloe", "butylka", "etiketka", "igristoe", "krasnoe", "rozovoe", "suhoe",
     "vino", "wine", "winery",
@@ -25,6 +26,13 @@ def extract_label_text(image: np.ndarray) -> str:
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
     return pytesseract.image_to_string(gray, lang="rus+eng", config="--oem 1 --psm 6")
+
+
+def extract_year(text: str) -> int | None:
+    found = {int(match) for match in VINTAGE_PATTERN.findall(text)}
+    if len(found) != 1:
+        return None
+    return found.pop()
 
 
 def text_score(text: str, wine: Wine) -> float:

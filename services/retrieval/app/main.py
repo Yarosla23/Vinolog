@@ -115,10 +115,7 @@ async def evaluation_search(image: UploadFile = File(...)) -> dict[str, str]:
     started = perf_counter()
     result = run_search(await read_image_upload(image))
     candidates = result["candidates"]
-    if not isinstance(candidates, list) or not candidates:
-        raise HTTPException(status_code=422, detail="На изображении недостаточно признаков для поиска.")
-    top = candidates[0]
-    if not isinstance(top, dict) or not isinstance(top.get("slug"), str):
-        raise HTTPException(status_code=500, detail="Поиск вернул некорректного кандидата.")
+    top = candidates[0] if isinstance(candidates, list) and candidates else None
+    slug = top.get("slug") if isinstance(top, dict) else None
     _ = perf_counter() - started
-    return {"slug": top["slug"]}
+    return {"slug": slug if isinstance(slug, str) else ""}
