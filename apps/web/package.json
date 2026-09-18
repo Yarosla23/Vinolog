@@ -13,16 +13,23 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.118",
+    "@ai-sdk/google": "^3.0.123",
+    "@ai-sdk/openai": "^3.0.114",
     "@fontsource/source-sans-3": "^5.2.8",
     "@fontsource/source-serif-4": "^5.2.8",
     "@lucide/vue": "^1.46.0",
     "@vinolog/contracts": "*",
+    "ai": "^6.0.286",
+    "glin-profanity": "^3.3.0",
     "nuxt": "^4.5.2",
+    "pg": "^8.23.0",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.9.0",
+    "@types/pg": "^8.23.1",
     "eslint": "^9.35.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",

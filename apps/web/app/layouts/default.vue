@@ -1,13 +1,14 @@
 <template>
   <div class="app-shell">
+    <a class="skip-link" href="#main-content">К основному содержимому</a>
     <AppHeader />
-    <main>
+    <main id="main-content" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
       <div class="page-container site-footer__inner">
-        <p>Демонстрационный каркас для кейса РСХБ Цифра</p>
-        <p>Точные совпадения появятся после подключения каталога и CV-сервиса.</p>
+        <p>Продуктовый прототип для кейса РСХБ Цифра</p>
+        <p>Результаты сканера и сомелье всегда маркируют демонстрационный режим.</p>
       </div>
     </footer>
   </div>

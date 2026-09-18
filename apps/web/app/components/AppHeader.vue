@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Bookmark, Database, ScanLine, Sparkles } from '@lucide/vue'
+import { Bookmark, Database, ScanLine, Sparkles, Wine } from '@lucide/vue'
 import { isFeatureEnabled } from '#shared/utils/feature-flags'
 
 const config = useRuntimeConfig()
 const isAstroEnabled = computed(() => isFeatureEnabled(config.public.astroEnabled))
+const isSommelierEnabled = computed(() => config.public.sommelierMode !== 'off')
 </script>
 
 <template>
@@ -22,19 +23,23 @@ const isAstroEnabled = computed(() => isFeatureEnabled(config.public.astroEnable
       </NuxtLink>
 
       <nav class="site-nav" aria-label="Основная навигация">
-        <NuxtLink class="site-nav__link" to="/">
+        <NuxtLink class="site-nav__link" to="/" aria-label="Сканер">
           <ScanLine :size="19" aria-hidden="true" />
           <span>Сканер</span>
         </NuxtLink>
-        <NuxtLink class="site-nav__link" to="/pairings">
+        <NuxtLink class="site-nav__link" to="/pairings" aria-label="Мои сочетания">
           <Bookmark :size="19" aria-hidden="true" />
           <span>Мои сочетания</span>
         </NuxtLink>
-        <NuxtLink v-if="isAstroEnabled" class="site-nav__link" to="/astro-sommelier">
+        <NuxtLink v-if="isSommelierEnabled" class="site-nav__link" to="/sommelier" aria-label="Цифровой сомелье">
+          <Wine :size="19" aria-hidden="true" />
+          <span>Сомелье</span>
+        </NuxtLink>
+        <NuxtLink v-if="isAstroEnabled" class="site-nav__link" to="/astro-sommelier" aria-label="Астро-сомелье">
           <Sparkles :size="19" aria-hidden="true" />
           <span>Астро-сомелье</span>
         </NuxtLink>
-        <NuxtLink class="site-nav__link" to="/admin">
+        <NuxtLink class="site-nav__link" to="/admin" aria-label="Каталог">
           <Database :size="19" aria-hidden="true" />
           <span>Каталог</span>
         </NuxtLink>

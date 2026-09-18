@@ -15,6 +15,7 @@
     "prepare:nuxt": "npm run postinstall --workspace @vinolog/web",
     "typecheck": "npm run typecheck --workspace @vinolog/web",
     "test": "npm run test --workspace @vinolog/web",
+    "eval:sommelier": "node scripts/eval-sommelier.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   }
 }
