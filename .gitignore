@@ -9,6 +9,10 @@ github_gem_token.txt
 .DS_Store
 coverage/
 
+# Type-checker output must not sit beside TypeScript and Vue sources.
+apps/web/app/**/*.js
+apps/web/server/**/*.js
+
 # Local datasets and model artifacts are never committed.
 data/
 models/

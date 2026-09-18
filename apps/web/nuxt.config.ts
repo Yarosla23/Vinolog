@@ -1,3 +1,5 @@
+import { isFeatureEnabled } from './shared/utils/feature-flags'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -8,6 +10,7 @@ export default defineNuxtConfig({
     retrievalBaseUrl: process.env.NUXT_RETRIEVAL_BASE_URL || 'http://127.0.0.1:8000',
     public: {
       scanMode: process.env.NUXT_PUBLIC_SCAN_MODE || 'mock',
+      astroEnabled: isFeatureEnabled(process.env.NUXT_PUBLIC_ASTRO_ENABLED),
     },
   },
   typescript: {

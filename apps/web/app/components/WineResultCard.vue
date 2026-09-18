@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ScanResponse } from '@vinolog/contracts'
-import { ArrowRight, CircleAlert, Grape, MapPin, Palette, RotateCcw, Tags, ThermometerSun, Utensils } from '@lucide/vue'
+import { matchScanWineToZodiac } from '@vinolog/contracts'
+import { ArrowRight, CircleAlert, Grape, Info, MapPin, Palette, RotateCcw, Sparkles, Tags, ThermometerSun, Utensils } from '@lucide/vue'
+import { isFeatureEnabled } from '#shared/utils/feature-flags'
 
 const props = defineProps<{
   result: ScanResponse
@@ -10,11 +12,16 @@ const emit = defineEmits<{
   resetRequested: []
 }>()
 
+const config = useRuntimeConfig()
+const isAstroEnabled = computed(() => isFeatureEnabled(config.public.astroEnabled))
+
 const pairingQuery = computed(() => ({
   slug: props.result.wine?.slug,
   name: props.result.wine?.name,
   producer: props.result.wine?.producer,
 }))
+
+const zodiacMatch = computed(() => matchScanWineToZodiac(props.result))
 </script>
 
 <template>
@@ -46,6 +53,23 @@ const pairingQuery = computed(() => ({
         <p v-if="result.wine.description" class="wine-card__description">
           {{ result.wine.description }}
         </p>
+
+        <details v-if="isAstroEnabled && zodiacMatch" class="zodiac-popover">
+          <summary aria-label="Узнать винный знак этой бутылки">
+            <Sparkles :size="18" aria-hidden="true" />
+            Если бы у этого вина был знак…
+            <Info :size="16" aria-hidden="true" />
+          </summary>
+          <div class="zodiac-popover__panel">
+            <ZodiacMark :symbol="zodiacMatch.profile.symbol" size="compact" />
+            <div>
+              <p class="eyebrow">{{ zodiacMatch.profile.element }} · {{ zodiacMatch.profile.name }}</p>
+              <h3>{{ zodiacMatch.profile.tagline }}</h3>
+              <p>{{ zodiacMatch.profile.description }}</p>
+              <small>Рекомендация на основе описания и сорта вина.</small>
+            </div>
+          </div>
+        </details>
 
         <dl class="wine-facts">
           <div v-if="result.wine.category">

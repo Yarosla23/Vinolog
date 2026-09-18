@@ -102,6 +102,7 @@ services:
       VINLOG_UID: ${VINLOG_UID:-1000}
       VINLOG_GID: ${VINLOG_GID:-1000}
       NUXT_PUBLIC_SCAN_MODE: retrieval
+      NUXT_PUBLIC_ASTRO_ENABLED: ${NUXT_PUBLIC_ASTRO_ENABLED:-true}
       NUXT_RETRIEVAL_BASE_URL: http://retrieval:8000
       PGHOST: db
       PGPORT: "5432"

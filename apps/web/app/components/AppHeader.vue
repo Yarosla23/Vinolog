@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { Bookmark, Database, ScanLine } from '@lucide/vue'
+import { Bookmark, Database, ScanLine, Sparkles } from '@lucide/vue'
+import { isFeatureEnabled } from '#shared/utils/feature-flags'
+
+const config = useRuntimeConfig()
+const isAstroEnabled = computed(() => isFeatureEnabled(config.public.astroEnabled))
 </script>
 
 <template>
@@ -25,6 +29,10 @@ import { Bookmark, Database, ScanLine } from '@lucide/vue'
         <NuxtLink class="site-nav__link" to="/pairings">
           <Bookmark :size="19" aria-hidden="true" />
           <span>Мои сочетания</span>
+        </NuxtLink>
+        <NuxtLink v-if="isAstroEnabled" class="site-nav__link" to="/astro-sommelier">
+          <Sparkles :size="19" aria-hidden="true" />
+          <span>Астро-сомелье</span>
         </NuxtLink>
         <NuxtLink class="site-nav__link" to="/admin">
           <Database :size="19" aria-hidden="true" />
